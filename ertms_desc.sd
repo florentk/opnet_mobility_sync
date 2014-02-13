@@ -1,0 +1,11 @@
+# Simulator Description
+
+start_definition
+	platform:     linux_x86
+	use_esa_main: no
+	bind_obj:     ertms_cosim_ctrl.o
+	#bind_lib:     xxx.lib
+	bitness:      64bit
+	#kernel:      development
+	#dll_lib:     xxx.dll
+end_definition
