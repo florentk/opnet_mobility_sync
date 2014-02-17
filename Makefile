@@ -16,6 +16,9 @@ edit:
 anim:
 	op_vuanim&
 
+doc:
+	firefox file:///home/florent/Documents/docs/modeler/modeler.html&
+
 clean:
 	rm ertms_cosim_ctrl.o ertms_test.project/ertms_test-scenario1.dev64.i1.sim
 

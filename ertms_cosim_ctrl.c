@@ -20,21 +20,25 @@ void getTrainPosition(int id, int t, Ertms_Train_Pos *train_pos) {
 	train_pos->posy = (double)t*2+20*id;
 }
 
+int getTrainsPosition(const int t, Ertms_Train_Pos *train_pos){
+	const int nb_train = 5;
+	int i;	
+
+	for(i=0;i<nb_train;i++) getTrainPosition(i+1,t,train_pos+i);
+
+	return nb_train;
+}
+
 int main(int argc, char **argv)
 {
 	EsaT_State_Handle esa_handle;
-	int evt_num;
-	double ret_time,old_ret_time=0.0;
+	double old_ret_time=0.0;
 	EsaT_Interface *interfaces;
 	EsaT_Interface inf_nb_train;
 	EsaT_Interface inf_test;
 	int num;
-	int status;
-	int i;
 	int t = 0;
-	int nb_train;
 	Ertms_Train_Pos *train_pos;
-	
 	
 	Esa_Main(argc, argv, ESAC_OPTS_NONE);
 	Esa_Init(argc, argv, ESAC_OPTS_NONE, &esa_handle);
@@ -45,10 +49,14 @@ int main(int argc, char **argv)
 	inf_test = interfaces[1];
 
 	train_pos = (Ertms_Train_Pos *) malloc(MAX_NB_TRAIN * (sizeof(Ertms_Train_Pos)));
-	nb_train = 5;
 	
 	while(1)
 	{
+		int status,evt_num;
+		double ret_time;
+
+		const int nb_train = getTrainsPosition(t, train_pos);
+
 		//sleep(1);
 		t+=TIME_STEP;
 		Esa_Execute_Until(esa_handle, &status, t, 
@@ -64,8 +72,6 @@ int main(int argc, char **argv)
 
 		printf("External program %d %d %f %d\n",status,t,ret_time,evt_num);
 		fflush(stdout);
-		
-		for(i=0;i<nb_train;i++) getTrainPosition(i+1,t,train_pos+i);
 
 		Esa_Interface_Value_Set(
 			esa_handle, &status, inf_test, ESAC_NOTIFY_NEVER, train_pos);
