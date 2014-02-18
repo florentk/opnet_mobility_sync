@@ -14,20 +14,44 @@ typedef struct _Ertms_Train_Pos{
 	double posy;
 }Ertms_Train_Pos;
 
-void getTrainPosition(int id, int t, Ertms_Train_Pos *train_pos) {
+void getFictivePosition(int id, int t, Ertms_Train_Pos *train_pos) {
 	sprintf(train_pos->name,"Mobile_1_%d",id);
 	train_pos->posx = (double)t*1.5+20*id;
 	train_pos->posy = (double)t*2+20*id;
 }
 
+int readPosition(FILE *f, Ertms_Train_Pos *train_pos) {
+	int lane,segment;
+	return fscanf(f, "%255s %d %d %lf %lf", train_pos->name, &lane, &segment, &(train_pos->posx), &(train_pos->posy));
+}
+
+int getTrainsPositionFromFile(FILE *f, Ertms_Train_Pos *train_pos){
+	//const int nb_train = 5;
+	int i;	
+
+	
+	for(i=0;i<MAX_NB_TRAIN;i++){
+		//printf("read one position\n");	
+		int ret=readPosition(f, train_pos+i);
+		//printf("ret : %d\n",ret);
+		if(ret<5) break;
+	}
+	
+	//for(i=0;i<nb_train;i++) getFictivePosition(i+1,t,train_pos+i);
+
+	return i;
+}
+
+
 int getTrainsPosition(const int t, Ertms_Train_Pos *train_pos){
 	const int nb_train = 5;
 	int i;	
-
-	for(i=0;i<nb_train;i++) getTrainPosition(i+1,t,train_pos+i);
+	
+	for(i=0;i<nb_train;i++) getFictivePosition(i+1,t,train_pos+i);
 
 	return nb_train;
 }
+
 
 int main(int argc, char **argv)
 {
@@ -36,6 +60,7 @@ int main(int argc, char **argv)
 	EsaT_Interface *interfaces;
 	EsaT_Interface inf_nb_train;
 	EsaT_Interface inf_test;
+	FILE *f=fopen("/tmp/ertms","r");
 	int num;
 	int t = 0;
 	Ertms_Train_Pos *train_pos;
@@ -55,7 +80,13 @@ int main(int argc, char **argv)
 		int status,evt_num;
 		double ret_time;
 
-		const int nb_train = getTrainsPosition(t, train_pos);
+		printf("Read positions !\n");
+
+		//const int nb_train = getTrainsPosition(t, train_pos);
+		const int nb_train = getTrainsPositionFromFile(f, train_pos);
+
+		printf("Go Opnet !\n");
+		fflush(stdout);
 
 		//sleep(1);
 		t+=TIME_STEP;
@@ -70,7 +101,7 @@ int main(int argc, char **argv)
 
 		old_ret_time=ret_time;
 
-		printf("External program %d %d %f %d\n",status,t,ret_time,evt_num);
+		printf("External program %d %d %f %d %d\n",status,t,ret_time,evt_num,nb_train);
 		fflush(stdout);
 
 		Esa_Interface_Value_Set(
@@ -79,7 +110,8 @@ int main(int argc, char **argv)
 		Esa_Interface_Value_Set(
 			esa_handle, &status, inf_nb_train, ESAC_NOTIFY_IMMEDIATELY, nb_train);
 	}
-
+	
+	fclose(f);
 	free(train_pos);
 
 	return 0;
